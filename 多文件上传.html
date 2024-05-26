@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .item {
+      width: 400px;
+      height: 400px;
+      background-color: skyblue;
+    }
+    .upload_box {
+      margin: 0 auto;
+      background-color: white;
+      height: 300px;
+      width: 300px;
+      box-sizing: border-box;
+      padding: 40px;
+
+    }
+    .upload_inp {
+      display: none;
+    }
+    em:hover {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="item">
+      <h3>多文件上传</h3>
+      <section class="upload_box" id="upload5">
+        <input type="file" class="upload_inp" multiple>
+        <div class="upload_button_box">
+          <button class="upload_button select">选择文件</button>
+          <button class="upload_button upload">上传到服务器</button>
+        </div>
+        <ul class="upload_list">
+          <!-- <li>
+            <span>文件:xxxx</span>
+            <span><em>移除</em></span>
+          </li> -->
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const fn = function() {
+      const upload = document.querySelector('#upload5')
+      const upload_inp = document.querySelector('.upload_inp')
+      const upload_button_select = document.querySelector('.upload_button.select')
+      const upload_button_upload = document.querySelector('.upload_button.upload')
+      const upload_list = document.querySelector('.upload_list')
+
+      let _files = []
+
+      // 验证是否处于可操作性状态
+      const checkIsDisable = element =>{
+        let classList = element.classList
+        return classList.contains('disable') || classList.contains('loading')
+      }
+
+      //改变按钮的状态
+      const changeDisable = flag => {
+        if (flag) {
+          upload_button_select.classList.add('disable')
+          upload_button_load.classList.add('loading')
+          return
+        }
+        upload_button_select.classList.remove('disable')
+        upload_button_load.classList.remove('loading')
+        
+      }
+
+      // 把文件上传到服务器
+      upload_button_upload.addEventListener('click', async function() {
+        if( checkIsDisable(this) ) return
+        if (_files.length === 0) {
+          alert('请您先选择要上传的文件~')
+          return
+        }
+        changeDisable(true)
+
+        // 循环发送请求
+        let upload_list_arr = Array.from(upload_list.querySelectorAll('li'))
+        _files = _files.map(item => {
+          let fm = new FormData()
+          let curLi = upload_list_arr.find(liBox => liBox.getAttribute('key') === item.key)
+          curSpan = curLi ? curLi.querySelector('span:nth-last-child(1)') : null
+          fm.append('file', item.file)
+          fm.append('filename', item.filename)
+          return instance.post('/upload_single', fm, {
+            onUploadProgess(e) {
+              // 检查每一个的上传进度
+              if (curSpan) {
+                curSpan.innerHTML = `${(e.loaded/e.total *100).toFixed(2)}%`
+              }
+            }
+          }).then(data => {
+            if (+data.code === 0) {
+              if(curSpan) {
+                curSpan.innerHTML = '100%'
+              }
+            }
+            return Promise.reject()
+          })
+        })
+
+        Promise.all(_files).then(()=>{
+          alert('恭喜你,所有文件上传成功')
+        }).catch(()=>{
+          alert('很遗憾,上传过程中出现问题,请您稍后再试~')
+        }).finally(()=>{
+          changeDisable(false)
+          _files = []
+          upload_list.innerHTML = ''
+          upload_list.style.display = 'none'
+        }
+      )
+
+      })
+
+      //基于事件委托实现移除的操作
+      upload_list.addEventListener('click', function(e) {
+        let target = e.target
+        let curLi = null
+        if (target.tagName === 'EM') {
+          curLi = target.parentNode.parentNode
+          if(!curLi) return
+          upload_list.removeChild(curLi)
+          let key = curLi.getAttribute('key')
+          _files = _files.filter(file => file.key !== key )
+          if (_files.length === 0) {
+        upload_list.style.display = 'none'
+
+          }
+        }
+      })
+      
+      // 获取唯一值
+      const createRandom = () =>{
+        let ran = Math.random() * new Date()
+        return ran.toString(16).replace('.', '')
+      }
+
+      upload_inp.addEventListener('change', function() {
+        _files = Array.from(upload_inp.files)
+        if (_files.length === 0) return
+        // 重构,给每一个设置一个唯一值,作为自定义属性存储到元素上,点击删除按钮时.基于这个自定义属性,删除集合中的这一项
+        _files = _files.map(file => {
+          return {
+            file,
+            filename: file.name,
+            key: createRandom()
+          }
+        })
+
+        let str = ''
+        _files.forEach((item, index) => {
+          str += `<li key='${item.key}'>
+                    <span>文件${index + 1}:${item.filename}</span>
+                    <span><em>移除</em></span>
+                  </li>`
+        })
+        upload_list.innerHTML = str
+        upload_list.style.display = 'block'
+      })
+
+      upload_button_select.addEventListener('click', function() {
+        if( checkIsDisable(this) ) return
+        upload_inp.click()
+      })
+    }
+
+    fn()
+  </script>
+</body>
+</html>
