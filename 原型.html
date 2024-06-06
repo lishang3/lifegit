@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    function Person() {
+
+    } 
+    const p = new Person()
+    // p.__proto__.constructor.prototype.__proto__ // Object.prototype
+    console.log(p.__proto__);
+    console.log('------------------');
+    console.log(p.__proto__.constructor);
+    console.log('------------------');
+    console.log(p.__proto__.constructor.prototype);
+
+
+    // Person.prototype.constructor.prototype.__proto__ 
+    
+  </script>
+</body>
+</html>

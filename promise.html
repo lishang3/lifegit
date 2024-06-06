@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    function testPromise(ready) {
+      return new Promise(function(resolve,reject){
+        if(ready) {
+          resolve("hello world");
+        }else {
+          reject("No thanks");
+        }
+      });
+    };
+    // 方法调用1
+    testPromise(false).then(function(msg){
+      console.log('success  ' + msg);
+    },function(error){
+      console.log('error' + error);
+    });
+
+    
+
+
+     testPromise(false).then(function(msg){
+    console.log('success ' + msg);
+  }).catch(function(error){
+    console.log('error ' + error);
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      text-decoration: none;
+      list-style: none;
+    }
+    #banner {
+      width: 800px;
+      height: 400px;
+      border: 2px solid #999;
+      overflow: hidden;
+      margin: 50px auto;
+      position: relative;
+
+    }
+    #imglist {
+      width: 4000px;
+      height: 400px;
+      background-color: red;
+      
+    }
+    #imglist img {
+      width: 800px;
+      height: 400px;
+      
+    }
+    #imglist li {
+      float: left;
+    }
+    .button {
+      position: absolute;
+      background-color: #666;
+      width: 30px;
+      height: 40px;
+      color: #fff;
+      text-align: center;
+      line-height: 40px;
+      top: 45%;
+      cursor: pointer;
+    }
+    .pre {
+      left: 5px;
+    }
+    .next {
+      right: 5px;
+    }
+    .icolist {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      
+    }
+    .icolist li {
+      float: left;
+      width: 30px;
+      height: 30px;
+      color: white;
+      border-radius: 50%;
+      background-color: #666;
+      text-align: center;
+      line-height: 30px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="banner">
+    <ul id="imglist">
+      <li><img src="/img/1.jpg" alt=""></li>
+      <li><img src="/img/2.jpg" alt=""></li>
+      <li><img src="/img/3.jpg" alt=""></li>
+      <li><img src="/img/5.jpg" alt=""></li>
+      <li><img src="/img/1.jpg" alt=""></li>
+    </ul>
+    <div class="button pre">《</div>
+    <div class="button next">》</div>
+    <ul class="icolist">
+      <li>1</li>
+      <li>2</li>
+      <li>3</li>
+      <li>4</li>
+    </ul>
+  </div>
+  <script>
+    const eprev = document.querySelector('.pre')
+    const enext = document.querySelector('.next')
+    const imglist = document.querySelector('#imglist')
+    const esico = document.querySelectorAll('.icolist li')
+    const eicolist = document.querySelector('.icolist') 
+    const eimglist = document.querySelector('#imglist')
+    let left = 0
+    let timer 
+    let m 
+    run()
+    function run() {
+      if(left <= -3200){
+        left = 0
+      }
+      m = Math.floor(-left / 800)
+      imglist.style.marginLeft = left + 'px'
+      let n = (left % 800 === 0) ? 1200 : 10
+      left -= 10
+      timer = setTimeout(run, n)
+      icochange(m)
+    }
+    function imgChange(n) {
+      let lt = - (n * 800) 
+      imglist.style.marginLeft = lt + 'px'
+      left = lt
+    }
+    eprev.addEventListener('click', function() {
+      let prevgo = Math.floor(-left / 800) - 1
+      if (prevgo === -1) {
+        prevgo = 3
+      }
+      imgChange(prevgo)
+    })
+
+    enext.addEventListener('click', function() {
+      let nextgo = Math.floor(-left / 800) + 1
+      if (nextgo === 4) {
+        nextgo = 0
+      }
+      imgChange(nextgo)
+    })
+
+    function icochange(m) {
+      for (let index = 0; index < esico.length; index++) {
+        esico[index].style.backgroundColor = ''
+      }
+      if (m < esico.length) {
+        esico[m].style.backgroundColor = 'red'
+      }
+    }
+    eicolist.addEventListener('click', e => {
+      let tg = e.target
+      let ico = tg.innerHTML - 1
+      imgChange(ico)
+      icochange(ico)
+    })
+    eimglist.addEventListener('mouseover', function(){
+      clearTimeout(timer)
+    })
+    eimglist.addEventListener('mouseout', function() {
+      run()
+    })
+  </script>
+</body>
+</html>

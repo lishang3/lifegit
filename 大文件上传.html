@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div class="container">
+    <div class="item">
+      <h3>大文件上传</h3>
+      <section class="upload_box" id="upload7">
+        <input type="file" class="upload_inp">
+        <div class="upload_button_box">
+          <button class="upload_button select">上传图片</button>
+        </div>
+        <div class="upload_progress">
+          <div class="value"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script>
+    const upload = document.querySelector('#upload7')
+    const upload_inp = document.querySelector('.upload_inp')
+    const upload_button_select = document.querySelector('.upload_button.select')
+    const upload_progress = document.querySelector('.upload_progress')
+    const upload_progress_value = upload_progress.querySelector('.value')
+
+    // 验证是否处于可操作状态
+    const checkDisable = e => {
+      let classList = e.classList
+      return classList.contains('disable') || classList.contains('loading')
+    }
+
+    const changeBuffer = file => {
+      return new Promise(resolve => {
+        let fileReader = new FileReader()
+        fileReader.readAsArrayBuffer(file)
+        fileReader.onload = ev => {
+          let buffer = ev.target.result
+          let spark = new sparkMD5.ArrayBuffer()
+          let HASH
+          let suffix
+          spark.append(buffer)  // 把得到的buffer放进来
+          HASH = spark.end()   //end方法表示处理完了，读取到hash值
+          suffix = /\.([a-zA-Z0-9]+)$/.exec(file.name)[1]
+          resolve({
+            buffer,
+            HASH,
+            suffix,
+            filename: `${HASH}.${suffix}`
+          })
+        }
+      })
+    }
+
+    // 2.
+    upload_inp.addEventListener('change', async function() {
+      let file = upload_inp.files[0]
+      if (!file) return
+      upload_button_select.classList.add('loading')
+      upload_progress.style.display = 'block'
+
+      // 3.获取文件的HASH值
+      let { HASH, suffix} = await changeBuffer(file)
+
+      // 4.获取已经上传的切片信息
+      let already = []
+      let data = null
+      try {
+        data = await instance.get('/upload_already', {
+          params: {
+            HASH
+          }
+        })
+        if (+data.code === 0) {
+          already = data.fileList
+        }
+      } catch (error) { }
+      
+
+      //5.实现文件的切片处理  [固定大小 & 固定数量]
+      let max = 1024 * 100
+      let count = Math.ceil(file.size / max)
+      let index = 0
+      let chunks = []
+      if (count > 100) {
+        max = file.size / 100
+        count = 100
+      }
+      while (index < count) {
+        chunks.push({
+          file: file.slice(index * max, (index + 1) * max),
+          filename: `${HASH}_${index+1}.${suffix}`
+        })
+        index++
+      }
+
+      const clear = () => {
+        upload_button_select.classList.remove('loading')
+        upload_progress.style.display = 'none'
+        upload_progress_value.style.width = '0%'
+      }
+
+      //上传成功的处理
+      index = 0
+      const complete = async () => {
+        // 管控进度条
+        index++
+        upload_progress_value.style.width = `${index/count*100}%`
+
+        // 当所有切片都上传成功，我们合并切片
+        if (index < count)  return
+        upload_progress_value.style.width = '100%'
+        try {
+          
+          data = await instance.post('/upload_merge', {
+              HASH,
+              count    
+          },{
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
+          })
+          if (+data.code === 0) {
+            alert(`恭喜宁，文件上传成功，宁可以基于${data.servicePath}访问文件`)
+            clear()
+            return
+          }
+          throw data.codeText
+        } catch (error) {
+          alert('切片合并失败，请您稍后再试~')
+          clear()
+        }
+
+      }
+
+      //6. 把每一个切片都上传到服务器
+      chunks.forEach(chunk => {
+        // 已经上传的无需在上传
+        if(already.length > 0 && already.includes(chunk.filename)) {
+          complete()
+          return
+        }
+        let fm = new FormData
+        fm.append('file', chunk.file)
+        fm.append('filename', chunk.filename)
+        instance.post('/upload_chunk', fm).then(data => {
+          if (+data.code === 0) {
+            complete()
+            return
+          }
+          return Promise.reject(data.codeText)
+        }).catch(() => {
+          alert('当前切片上传失败，请您稍后再试~')
+          clear()
+        })
+      })
+
+
+
+
+
+      })
+  
+    
+
+    // 1.
+    upload_button_select.addEventListener('click', function() {
+      //防抖
+      if(checkDisable(this))  return  
+      upload_inp.click()
+    })
+  </script>
+</body>
+</html>
