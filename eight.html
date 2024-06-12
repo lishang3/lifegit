@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script>
+    // let const var
+    //  块级作用域   内层变量覆盖外层变量   计数的循环变量泄露
+    //  变量提升
+    //  暂时性死区
+    //  重复声明
+    //  指针指向
+
+    // new的过程
+    //  创建一个空对象
+    //  
+
+
+    // 箭头函数和普通函数的区别
+    // 1.写法简便
+    // 2.箭头函数  没有this  继承来的this指向不会改变  不能用于构造函数  没有argument 没有prototype 
+    //  apply不会改变指向 
+
+    function mutiple(...args) {
+      console.log(args)
+      console.log(...args)
+    }
+    mutiple(1, 2, 3, 4) // [1, 2, 3, 4]
+
+    function mutiple1() {
+      console.log(arguments)
+      // console.log(...args)
+    }
+    mutiple1(1, 2, 3, 4) // [1, 2, 3, 4]
+  </script>
+</body>
+</html>
